@@ -46,6 +46,27 @@ rather than failing.
   first, a cheap semantic pass second, and a disposition: keep, rewrite once,
   or cut.
 - **Artefacts**: A5 PDF via Typst, EPUB, and a self-contained HTML file.
+
+---
+
+## What it looks like
+
+The compile gate, on a real run:
+
+![hermes imprint compile](docs/shots/compile.png)
+
+The book it writes. Cover, a chapter, and the colophon that prints the
+verification ratio:
+
+![the cover](docs/shots/cover.png)
+![a chapter, every sentence carrying its event](docs/shots/chapter.png)
+![the colophon](docs/shots/colophon.png)
+
+The one-page executive edition, and the appendix that lists every cited event
+in order:
+
+![the executive edition](docs/shots/executive.png)
+![the appendix](docs/shots/appendix.png)
 - **An executive edition**: shipped, blocked, owed, spend, hours. The Friday
   status report that writes itself.
 - **A Desktop library** with a shelf, page-turn preview, genre switch, and a
