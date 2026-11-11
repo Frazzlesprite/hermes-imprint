@@ -1,0 +1,49 @@
+name: imprint
+version: 0.1.0
+manifest_version: 2
+description: Compile a week of Hermes activity into a cited, typeset book with an executive summary.
+license: MIT
+homepage: https://github.com/Frazzlesprite/hermes-imprint
+tags: [journal, report, typesetting, retrospective]
+requires_hermes: ">=0.23.0"
+
+config_schema:
+  book_title:
+    type: str
+    default: "The Week"
+    description: "Title printed on the cover"
+  genre:
+    type: str
+    default: "epic"
+    description: "Prose voice: epic, noir or ships-log. Facts are identical in all three."
+  week_start_day:
+    type: str
+    default: "monday"
+    description: "First day of the week used when grouping events"
+  excluded_paths:
+    type: list
+    default: []
+    description: "Paths never recorded, matched case-insensitively on normalised separators"
+  retain_weeks:
+    type: int
+    default: 52
+    description: "How many weeks of ledger to keep before old rows are offered for pruning"
+
+provides_tools:
+  - imprint_compile
+  - imprint_preview
+  - imprint_status
+  - imprint_burn
+  - imprint_import
+
+provides_hooks:
+  - pre_tool_call
+  - post_tool_call
+  - post_api_request
+  - pre_approval_request
+  - post_approval_response
+  - subagent_start
+  - subagent_stop
+  - on_session_reset
+
+capabilities: []

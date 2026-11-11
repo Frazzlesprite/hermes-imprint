@@ -1,0 +1,28 @@
+# Byte-compiled / cache
+__pycache__/
+*.py[cod]
+
+# Virtual environments
+.venv/
+venv/
+
+# Test and tool artefacts
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Compiled book output - regenerated, never committed
+out/
+*.pdf
+*.epub
+.demo/
+
+# Local ledger copies used by tests
+*.db
+*.db-wal
+*.db-shm
+
+# OS noise
+.DS_Store
+Thumbs.db
