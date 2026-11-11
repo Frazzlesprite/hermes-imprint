@@ -7,9 +7,12 @@ update`` and follows the active profile. Nothing else on disk is written.
 
 from __future__ import annotations
 
+import logging
 import os
 import sqlite3
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 PLUGIN_NAME = "imprint"
 SCHEMA_VERSION = 1
@@ -68,6 +71,28 @@ CREATE TABLE IF NOT EXISTS exclusions (pattern TEXT PRIMARY KEY, added_at TEXT);
 
 CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT);
 """
+
+
+def active_home() -> str | None:
+    """The profile Hermes is serving right now, or None outside a Hermes process.
+
+    ``hermes_constants.get_hermes_home()`` resolves the context-local override
+    first, so a gateway thread serving profile B gets B even when the process
+    was launched with profile A's environment. When the harness is not importable
+    the answer is None rather than a guess: reading another profile's store is
+    worse than importing nothing.
+    """
+    try:
+        from hermes_constants import get_hermes_home
+    except Exception:
+        logger.warning("imprint: hermes_constants unavailable; profile scope unknown")
+        return None
+
+    try:
+        return str(get_hermes_home())
+    except Exception:
+        logger.warning("imprint: could not resolve the active profile", exc_info=True)
+        return None
 
 
 def connect(path: str | Path | None = None) -> sqlite3.Connection:

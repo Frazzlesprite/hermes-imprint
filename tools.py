@@ -110,24 +110,6 @@ def preview_book(args: dict, **kwargs) -> str:
         return _error(f"preview failed: {exc}")
 
 
-def burn_week(args: dict, **kwargs) -> str:
-    """Permanently erase one week: rows, artefacts and bible entries."""
-    try:
-        from . import pipeline
-
-        week = (args or {}).get("week") or ""
-        if not (args or {}).get("confirm"):
-            return _error("pass confirm=true to erase a week; nothing was deleted")
-        if not week:
-            return _error("which week? pass week='2026-W45'")
-
-        result = pipeline.burn_week(week)
-        return _ok(week=week, **result)
-    except Exception as exc:
-        logger.warning("imprint: burn failed", exc_info=True)
-        return _error(f"burn failed: {exc}")
-
-
 def import_history(args: dict, **kwargs) -> str:
     """Backfill from the profile's session store, read-only and bounded."""
     try:

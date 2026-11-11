@@ -21,9 +21,9 @@ Imprint observes and records. What that means in practice:
 | **Reads outside its own data** | Only `imprint_import`, which opens the active profile's `state.db` **read-only** and bounded to a requested window of days. Every other component reads only the plugin's own database. |
 | **Writes** | Only the plugin data directory (`plugin_data_dir("imprint")`). Never the install tree, never a config file, never another plugin's data. |
 | **Shell** | Runs `typst compile` when Typst is on `PATH`, and `typst --version` to check it. Nothing else. |
-| **Stored content** | Summaries of 280 characters or fewer, redacted **at write time**. Tool arguments are hashed, never stored. File contents, message bodies and command arguments never reach the ledger. |
+| **Stored content** | Summaries of 280 characters or fewer, redacted **at write time**. Tool arguments are hashed, never stored. File contents and command arguments never reach the ledger. Message bodies are never stored either, but `imprint_import` keeps a redacted summary of up to 280 characters drawn from each imported message. |
 | **Approvals** | Imprint observes approval prompts and records the decision. It never answers one, never auto-approves, and cannot veto a tool call. |
-| **Erase** | `imprint_burn(week, confirm=true)` deletes that week's ledger rows, compiled artefacts and bible entries. There is no undo. |
+| **Erase** | `imprint_burn` is not a model tool. Erasing a week is a human action: `/imprint burn`, `hermes imprint burn <week> --yes`, or the dashboard button. It deletes that week's ledger rows, compiled artefacts and bible entries, and there is no undo. |
 
 PDF rendering uses [Typst](https://typst.app), which you install yourself. If
 Typst is absent, Imprint still writes HTML and EPUB and says so in its result
@@ -111,8 +111,8 @@ the official GitHub releases page). Imprint does not download a binary.
 | Tool | `imprint_preview(book_id)` - the executive page as text |
 | Tool | `imprint_status()` - ledger size, weeks available, open threads |
 | Tool | `imprint_import(days=7)` - read-only backfill from the session store |
-| Tool | `imprint_burn(week="2026-W45", confirm=true)` - erase |
 | Slash | `/imprint`, `/imprint 2026-W45`, `/imprint status`, `/imprint library`, `/imprint burn` |
+| CLI | `hermes imprint burn 2026-W45 --yes` - erase a week (deliberately not a model tool) |
 | Desktop | Sidebar -> **Imprint**; palette -> *Imprint: open the library* |
 
 Settings live under `plugins.entries.imprint.settings`: `book_title`, `genre`,

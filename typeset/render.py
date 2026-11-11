@@ -10,6 +10,7 @@ from __future__ import annotations
 import html
 import json
 import logging
+import os
 import re
 import shutil
 import subprocess
@@ -430,6 +431,30 @@ def _write_epub(book_data: dict, target: Path) -> Path:
 # --------------------------------------------------------------------------
 
 
+def _typst_env() -> dict[str, str]:
+    """A minimal environment for the typst child process.
+
+    Typst needs PATH to find its own resources. On Windows it also needs
+    ``SystemRoot`` and a temp directory, or it fails to start. Nothing else from
+    the parent environment goes down: no API keys, no profile paths.
+    """
+    keep = (
+        "PATH",
+        "HOME",
+        "LANG",
+        "LC_ALL",
+        "TMPDIR",
+        "TEMP",
+        "TMP",
+        "USERPROFILE",
+        "SystemRoot",
+        "SYSTEMROOT",
+        "WINDIR",
+        "LOCALAPPDATA",
+    )
+    return {name: value for name in keep if (value := os.environ.get(name))}
+
+
 def _write_pdf(book_data: dict, out_dir: Path) -> Path | None:
     """Compile with Typst when it is on PATH. Honest about the fallback."""
     typst = shutil.which("typst")
@@ -462,6 +487,7 @@ def _write_pdf(book_data: dict, out_dir: Path) -> Path | None:
             check=True,
             capture_output=True,
             timeout=180,
+            env=_typst_env(),
         )
     except (subprocess.CalledProcessError, subprocess.TimeoutExpired, OSError):
         logger.warning("imprint: typst compile failed, keeping HTML and EPUB", exc_info=True)

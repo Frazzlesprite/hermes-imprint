@@ -13,6 +13,11 @@ import re
 
 REDACTED = "[redacted]"
 SUMMARY_LIMIT = 280
+# The regex pass is bounded before it runs. The multi-line private-key pattern is
+# quadratic on many unmatched BEGIN headers, and an imported message can be
+# megabytes long. 8 KB is far above the 280-character summary, so ordinary text
+# is unaffected.
+MAX_SCAN = 8 * 1024
 
 # Ordered: the first pattern to match claims the span. Long, unambiguous token
 # shapes come before the looser "key = value" catch-all.
@@ -68,6 +73,9 @@ _HEX_ID = re.compile(r"\b[0-9a-f]{8,}\b", re.IGNORECASE)
 _UUID = re.compile(r"\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b", re.IGNORECASE)
 _NUMBER = re.compile(r"(?<![A-Za-z])\d+(?:\.\d+)?")
 _WHITESPACE = re.compile(r"\s+")
+# A key block cut at MAX_SCAN has no END marker, so the multi-line pattern above
+# cannot see it. This catches the surviving header and masks everything after it.
+_UNTERMINATED_KEY = re.compile(r"-----BEGIN [A-Z ]*PRIVATE KEY-----.*\Z", re.DOTALL)
 
 _SIGNATURE_LIMIT = 120
 
@@ -101,10 +109,18 @@ def redact(text: str) -> tuple[str, tuple[str, ...]]:
 def summarize(text: str, limit: int = SUMMARY_LIMIT) -> tuple[str, tuple[str, ...]]:
     """Collapse, redact and bound one line of evidence.
 
-    The limit counts characters of the *cleaned* text: truncation happens
-    after redaction so a cut can never expose half a key.
+    The scan is bounded before the regex runs (see ``MAX_SCAN``). The limit
+    counts characters of the *cleaned* text, and truncation happens after
+    redaction so a cut can never expose half a key. A key block cut at the scan
+    cap would otherwise slip past the multi-line pattern, so any surviving
+    header masks the rest of the text.
     """
-    cleaned, kinds = redact(_WHITESPACE.sub(" ", (text or "").strip()))
+    raw = _WHITESPACE.sub(" ", (text or "").strip())[:MAX_SCAN]
+    cleaned, kinds = redact(raw)
+
+    if _UNTERMINATED_KEY.search(cleaned):
+        cleaned = _UNTERMINATED_KEY.sub(REDACTED, cleaned)
+        kinds = tuple(sorted(set(kinds) | {"private_key"}))
 
     if len(cleaned) > limit:
         clipped = cleaned[: limit - 1]

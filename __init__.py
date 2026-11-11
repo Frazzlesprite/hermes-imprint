@@ -21,7 +21,6 @@ _TOOLS = (
     (schemas.COMPILE, tools.compile_week, "Compile a week into a cited book"),
     (schemas.PREVIEW, tools.preview_book, "Read a book's executive edition"),
     (schemas.STATUS, tools.ledger_status, "Report ledger health"),
-    (schemas.BURN, tools.burn_week, "Erase one week"),
     (schemas.IMPORT, tools.import_history, "Backfill from the session store"),
 )
 

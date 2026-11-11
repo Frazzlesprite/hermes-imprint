@@ -144,24 +144,19 @@ def import_window(days: int = 7) -> dict:
 def _state_db() -> Path | None:
     """The active profile's state database, or None when there is not one.
 
-    An explicit HERMES_HOME is authoritative: if it has no store, the answer is
-    "none", not a different profile's database.
+    Resolution is the harness's job, not ours. ``get_hermes_home()`` honours the
+    context-local profile override, so a gateway thread serving one profile can
+    never read another profile's transcripts. There is deliberately no fallback:
+    an earlier version guessed at ``~/.hermes`` and ``%LOCALAPPDATA%``, which in
+    a multiplexed gateway means importing the launch profile's history into the
+    caller's ledger.
     """
-    home = os.environ.get("HERMES_HOME")
-    if home:
-        candidate = Path(home) / "state.db"
-        return candidate if candidate.is_file() else None
+    home = db.active_home()
+    if not home:
+        return None
 
-    candidates: list[Path] = [Path.home() / ".hermes" / "state.db"]
-
-    local = os.environ.get("LOCALAPPDATA")
-    if local:
-        candidates.append(Path(local) / "hermes" / "state.db")
-
-    for candidate in candidates:
-        if candidate.is_file():
-            return candidate
-    return None
+    candidate = Path(home) / "state.db"
+    return candidate if candidate.is_file() else None
 
 
 def _cutoff_for(conn: sqlite3.Connection, column: str, cutoff: datetime):

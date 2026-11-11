@@ -33,7 +33,6 @@ provides_tools:
   - imprint_compile
   - imprint_preview
   - imprint_status
-  - imprint_burn
   - imprint_import
 
 provides_hooks:

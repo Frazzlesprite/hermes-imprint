@@ -35,11 +35,28 @@ _pending_lock = threading.Lock()
 
 
 def _conn():
-    """One connection per thread, opened lazily against the plugin database."""
+    """One connection per thread per profile.
+
+    Hermes can serve several profiles from one process. A worker thread that
+    moves from profile A to profile B must not keep writing into A's ledger, so
+    the cache is keyed by the resolved home and the old connection is closed when
+    the key changes.
+    """
+    key = db.active_home() or ""
     conn = getattr(_local, "conn", None)
+
+    if conn is not None and getattr(_local, "key", None) != key:
+        try:
+            conn.close()
+        except Exception:  # noqa: BLE001 - a dead connection is not an error worth raising
+            logger.debug("imprint: closing a stale ledger connection failed", exc_info=True)
+        conn = None
+
     if conn is None:
         conn = db.connect()
         _local.conn = conn
+        _local.key = key
+
     return conn
 
 

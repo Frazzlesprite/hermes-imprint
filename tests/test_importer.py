@@ -7,6 +7,7 @@ import tempfile
 import unittest
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+from unittest import mock
 
 from imprint_plugin import db, importer
 
@@ -48,8 +49,14 @@ class Import(unittest.TestCase):
         os.environ["HERMES_HOME"] = str(self.tmp)
         os.environ["IMPRINT_DB_PATH"] = str(self.tmp / "ledger.db")
         os.environ["IMPRINT_DATA_DIR"] = str(self.tmp / "data")
+        # The store is resolved through the harness now, not through os.environ.
+        # Patching the seam is what a unit test should do: this asserts we ask
+        # the resolver, not that we reimplement it.
+        self._home = mock.patch.object(db, "active_home", return_value=str(self.tmp))
+        self._home.start()
 
     def tearDown(self):
+        self._home.stop()
         for key, value in self._saved.items():
             if value is None:
                 os.environ.pop(key, None)
@@ -83,9 +90,21 @@ class Import(unittest.TestCase):
         self.assertGreater(bound, 1_700_000_000)
 
     def test_missing_store_refuses(self):
-        os.environ["HERMES_HOME"] = str(self.tmp / "nowhere")
-        with self.assertRaises(FileNotFoundError):
-            importer.import_window(days=7)
+        with mock.patch.object(db, "active_home", return_value=str(self.tmp / "nowhere")):
+            with self.assertRaises(FileNotFoundError):
+                importer.import_window(days=7)
+
+    def test_does_not_fall_back_to_the_launch_profile(self):
+        """HERMES_HOME points at a good store; the active profile has none.
+
+        The importer must refuse rather than import the launch profile's
+        transcripts into this profile's ledger. That fallback was the bug in a
+        gateway serving several profiles.
+        """
+        self.assertTrue((self.tmp / "state.db").is_file())
+        with mock.patch.object(db, "active_home", return_value=str(self.tmp / "other")):
+            with self.assertRaises(FileNotFoundError):
+                importer.import_window(days=7)
 
 
 if __name__ == "__main__":

@@ -62,29 +62,6 @@ STATUS = {
     "parameters": {"type": "object", "properties": {}, "required": []},
 }
 
-BURN = {
-    "name": "imprint_burn",
-    "description": (
-        "Permanently delete one week's ledger rows, compiled artefacts and bible "
-        "entries. This is the privacy escape hatch and cannot be undone. "
-        "Only call it when the user has explicitly asked to erase a week."
-    ),
-    "parameters": {
-        "type": "object",
-        "properties": {
-            "week": {
-                "type": "string",
-                "description": "ISO week label to erase, e.g. '2026-W45'.",
-            },
-            "confirm": {
-                "type": "boolean",
-                "description": "Must be true. Guards against an accidental erase.",
-            },
-        },
-        "required": ["week", "confirm"],
-    },
-}
-
 IMPORT = {
     "name": "imprint_import",
     "description": (
@@ -104,4 +81,4 @@ IMPORT = {
     },
 }
 
-ALL = (COMPILE, PREVIEW, STATUS, BURN, IMPORT)
+ALL = (COMPILE, PREVIEW, STATUS, IMPORT)

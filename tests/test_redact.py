@@ -1,5 +1,6 @@
 """Redaction is the boundary between a useful ledger and a leak."""
 
+import time
 import unittest
 
 from imprint_plugin import redact
@@ -54,6 +55,26 @@ class Summarize(unittest.TestCase):
     def test_collapses_newlines(self):
         summary, _ = redact.summarize("line one\nline two\tline three")
         self.assertEqual("line one line two line three", summary)
+
+    def test_scan_is_bounded(self):
+        """Many unmatched BEGIN headers must not turn the regex into a stall."""
+        text = "-----BEGIN RSA PRIVATE KEY----- " * 4000
+        started = time.perf_counter()
+        summary, kinds = redact.summarize(text)
+        elapsed = time.perf_counter() - started
+
+        self.assertLess(elapsed, 1.0)
+        self.assertLessEqual(len(summary), redact.SUMMARY_LIMIT)
+        self.assertNotIn("BEGIN", summary)
+        self.assertIn("private_key", kinds)
+
+    def test_a_key_block_cut_at_the_cap_is_still_masked(self):
+        """Truncation removes the END marker, so the multi-line pattern cannot see it."""
+        text = "before " + "-----BEGIN RSA PRIVATE KEY----- " + "A" * (redact.MAX_SCAN * 2)
+        summary, kinds = redact.summarize(text)
+
+        self.assertNotIn("PRIVATE", summary)
+        self.assertIn("private_key", kinds)
 
 
 class ErrorSignature(unittest.TestCase):
